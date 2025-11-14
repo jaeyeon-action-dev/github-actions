@@ -1,4 +1,4 @@
-name: push-workflow # 보여지는 이름(명시적으로 작성하기.)
+name: push-workflow 1 # 보여지는 이름(명시적으로 작성하기.)
 on: push #어떤 이벤트로 인해 Github Action이 실행될지 지정.
 
 jobs:
