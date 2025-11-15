@@ -25,3 +25,10 @@ jobs:
           path: ./
       - name: check
         run: cat ./hello.txt
+
+# - 워크플로우 실행 중 생성된 파일 또는 파일 모음
+# - 워크플로우가 종료된 후에도, 데이터 유지 (90일)
+# - 다운로드 가능
+# - 깃헙 마켓플레이스에 정의된 공식 액션
+#     - upload-artifact
+#     - download-artifact
