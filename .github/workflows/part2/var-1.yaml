@@ -36,3 +36,23 @@ jobs:
         run: echo "level=job" >> $GITHUB_ENV
       - name: check env
         run: echo "LEVEL ${{env.level}}"
+
+
+
+# - step이나 job에서 사용할 수 있는 환경 변수
+# - key-vaule 형태로 데이터 저장.
+# - output
+#     - 같은 Job, 다른 job간에 데이터 공유
+# - env
+#     - 동일한 job에서만 데이터 공유
+# - 구성방법
+#     - env 사용
+#         - 워크플로우 내에서 정의
+#             - workflow level
+#             - job level
+#             - step level
+#     - 미리 정의
+# - 우선 순위
+#     - step >> job >> workflow
+# - env 사용
+#     - echo ‘”{key}={value}” >> $GITHUB_ENV
