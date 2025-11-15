@@ -28,7 +28,7 @@ jobs:
         run : |
           echo "This is step 2"
           echo "Multiple lines in a single step"
-      - name: echo inputs:
+      - name: "echo inputs"
         run : |
           echo ${{inputs.name}}
           echo ${{inputs.environment}}
