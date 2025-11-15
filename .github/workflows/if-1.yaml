@@ -23,8 +23,9 @@ jobs:
     - name: get event name
       if: github.event_name == 'push'
       run: echo "PUSH"
+    - name: get event name
       if: github.event_name != 'push'
-      run: echo "PUSH"
+      run: echo "WORKFLOW_DISPATCH"
 
 
 
