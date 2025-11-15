@@ -1,0 +1,15 @@
+name: path-filter
+on:
+  push:
+    paths:
+      - '.github/workflows/part1/*'
+
+jobs:
+  path-filter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: step1
+        run: echo "This workflow runs only when files in the .github/workflows/part1/ directory are updated"
+
+# - 특정 경로에서 실행
+#     - my-app 이라는 디렉토리 내에 파일이 업데이트 될 때만 실행
