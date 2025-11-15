@@ -13,3 +13,5 @@ jobs:
         run : |
           echo "This is step 2 of pull request workflow"
           echo "Multiple lines in a single step"
+
+# 변경사항을 코드 저장소에 합병시키려고 할 때 사용한다!!
