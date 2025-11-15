@@ -16,3 +16,12 @@ jobs:
         done
     - name: echo
       run: echo "This step will not be reached if the timeout occurs."
+
+
+# - 특정 시간이상 실행되면 자동으로 중단.
+# - 특정 Job or 특정 step 무한 루프
+#     - 불필요한 자원 소모 방지
+# - default : 360분
+# - job level
+# - step level
+# - timeout-minutes
