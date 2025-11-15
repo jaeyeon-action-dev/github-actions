@@ -1,0 +1,36 @@
+name: if-2
+on: push
+
+jobs:
+  job1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: exit 1
+        run: exit 1
+      - name : echo
+        run: echo hello
+  job2:
+    runs-on: ubuntu-latest
+    needs: [job1]
+    steps:
+      - name: echo
+        run: echo hello
+
+
+  # job3:
+  #   runs-on: ubuntu-latest
+  #   needs: [job1]
+  #   if: success()  # job1이 성공했을 때만 실행
+  #   steps:
+  #     - name: step3
+  #       run: echo "step3 done because job1 succeeded"
+  # job4:
+  #   runs-on: ubuntu-latest
+  #   needs: [job1]
+  #   if: always()  # job1의 성공 여부와 상관없이 항상 실행
+  #   steps:
+  #     - name: step4
+  #       run: echo "step4 always done"
+
+# - 특정 job과 step을 강제로 실행 가능
+# - if:always()
