@@ -22,4 +22,4 @@ jobs:
       #   run: npm install # 쉘 명령어 실행.
 
       # - name: Run tests # 테스트 실행
-      #   run: npm test # 쉘 명령어 실행.
+      #   run: npm test # 쉘 명령어 실행. 11
