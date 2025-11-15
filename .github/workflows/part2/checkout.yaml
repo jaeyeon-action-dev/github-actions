@@ -1,0 +1,52 @@
+name: checkout
+on: workflow_dispatch
+
+jobs:
+  no-checkout:
+    runs-on: ubuntu-latest
+    steps:
+      - name: check file list
+        run: cat README.md
+
+  checkout:
+    runs-on: ubuntu-latest
+    steps:
+      - name: user checkout action
+        uses: actions/checkout@v4
+      - name: check file list
+        run: cat README.md
+
+
+# - 깃헙 레포지토리를 가져와 작업을 수행
+# - 깃헙 마켓플레이스에 정의된 공식 액션
+# - 테스트 및 빌드 작업 수행
+# - 레포지토리 내용을 CICD 워크플로우에서 사용
+
+# uses:
+# - 워크플로우(.github/workflows/*.yaml) 안의 한 스텝(step) 에서 쓰입니다.
+# - uses: 뒤에는 “이미 만들어진 액션(Action)” 을 지정해서 실행하겠다는 의미
+# - uses: actions/checkout@v4
+# actions/checkout 액션의 버전 v4를 사용하겠다는 거예요.
+
+# actions/checkout 액션이 하는 일
+# 워크플로우가 실행되는 러너(runner) 머신에 여러분의 리포지토리 코드(파일들)를 내려받도록(clone) 해줌
+# 기본적으로 runs-on: ubuntu-latest 같은 머신 위에서 “비어있는 폴더” 상태로 시작하는데, 이 액션이 파일들이 있는 상태로 만들어 줘요. 
+
+# uses: = “이 단계에서 이 액션을 실행하겠습니다”
+# actions/checkout@v4 = “내 리포지토리의 코드를 이 러너에 내려받아 주세요”
+
+# uses: actions/checkout@v4 → repo를 가져오는 플러그인
+# uses: actions/setup-node@v3 → Node 환경 세팅
+# uses: docker/login-action@v3 → Docker 로그인
+# uses: actions/upload-artifact@v4 → 아티팩트 업로드
+
+# | 액션                                         | 설명                                                                            |
+# | ------------------------------------------ | ----------------------------------------------------------------------------- |
+# | `actions/setup-python@v4`                  | Python 환경을 세팅해주는 액션입니다. 예: 다양한 버전의 Python 설치 등. ([about.codecov.io][1])       |
+# | `actions/cache@vX`                         | 빌드나 테스트 시 사용하는 의존성 등을 캐시해서 다음 실행을 빠르게 만들어주는 액션입니다. ([about.codecov.io][1])    |
+# | `actions/setup-java@vX`                    | Java(JDK) 환경을 세팅해주는 액션입니다. ([about.codecov.io][1])                            |
+# | `actions/download-artifact@vX`             | 이전 스텝이나 이전 작업에서 업로드된 아티팩트를 다운로드해서 사용하는 액션입니다. ([about.codecov.io][1])         |
+# | `actions/create-release@vX`                | 릴리스를 생성해주는 액션입니다. ([about.codecov.io][1])                                     |
+# | `aws-actions/configure-aws-credentials@vX` | AWS 리소스 작업을 하기 전에 AWS 자격증명(Credentials)을 설정해주는 액션입니다. ([about.codecov.io][1]) |
+
+# [1]: https://about.codecov.io/blog/discovering-the-most-popular-and-most-used-github-actions/?utm_source=chatgpt.com "Discovering the Most Popular and Most Used Github Actions"
