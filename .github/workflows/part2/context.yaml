@@ -1,0 +1,56 @@
+name: context
+on: workflow_dispatch
+
+jobs:
+  context:
+    runs-on: ubuntu-latest
+    steps:
+      - name: github context
+        run: echo '${{tojson(github)}}'
+      - name : check github context
+        run: |
+          echo "Repository: ${{ github.repository }}"
+          echo "Event Name: ${{ github.event_name }}"
+          echo "SHA: ${{ github.sha }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Actor: ${{ github.actor }}"
+
+# - context
+#     - 워크플로우를 실행하는 환경에 대한 정보
+#     - Context를 왜 사용할까?
+#         - 더 유연한 워크플로우를 만들기 위해
+#     - ex) github context를 사용해서 조건 설정
+#         - dev branch에 push 이벤트 발생하면, workflow에서 1번 job 실행
+#         - master branch에 Push이벤트 발생하면, workflow에서 2번 job 실행
+
+# 컨텍스트란 무엇인가?
+# “컨텍스트(context)”는 워크플로우가 실행되는 환경, 트리거된 이벤트, 레포지토리 정보, 입력값 등 현재 실행 상황에 대한 메타데이터를 담고 있는 객체입니다
+# 예를 들어:
+# github.repository → 레포지토리 이름
+# github.event_name → 어떤 이벤트(push, pull_request,workflow_dispatch 등)로 동작했는지
+# github.ref → 어느 브랜치/태그로 실행되었는지
+# inputs.my_input → workflow_dispatch로 전달된 입력값
+# secrets.MY_SECRET → 저장된 시크릿 값 등이 있습니다. 
+
+# ✅ 왜 컨텍스트가 CI/CD에 도움이 될까?
+# 더 유연하고 스마트한 파이프라인을 만들기 위해서입니다. 구체적인 이유:
+# 조건부 실행(if :)
+# 예컨대: 브랜치가 main일 때만 배포 작업을 할지 결정할 수 있어요.
+# if: ${{ github.ref == 'refs/heads/main' }}
+# 이런 형태로 컨텍스트를 활용하면 “main에 push일 때만 배포한다” 같은 규칙을 쉽게 만들 수. 
+# 입력값이나 이벤트 정보 기반 작업 분기
+# 사용자가 수동 트리거(workflow_dispatch)로 브랜치나 환경(inputs)을 지정했다면,
+# run: echo "Deploying to ${{ inputs.environment }}"
+# 같은 방식으로 환경(environment)에 따라 다른 파이프라인 분기를 줄 수 있어요.
+
+# 로그·디버깅·자동 보고
+# 컨텍스트를 toJSON(github)처럼 출력해서 “이 워크플로우가 어떤 상황에서 실행됐는가”를 찍어볼 수 있어요. 
+# 이로써 문제 발생 시 원인을 파악하기 쉽습니다.
+# 자동화 대상 식별
+# 예를 들어, Pull Request 이벤트가 트리거 됐을 때 github.event.pull_request.number 등을 통해 PR 번호를 가져와서 자동 라벨링, 리뷰 요청 등 로직을 넣을 수 있어요.
+
+# 📝 유의사항 및 팁
+# 컨텍스트는 읽기 전용(metadata) 이므로, “값을 바꾼다”기보단 조건 판단, 변수로 활용하는 용도로 쓰입니다.
+# 일부 컨텍스트는 사용 가능한 위치가 제한돼 있어요. 예컨대 needs 컨텍스트는 reusable workflow 내에서만 활용 가능 등. 
+# 출력해서(예: toJSON(github)) 내부 구조를 확인하는 것이 디버깅에 정말 유용합니다. (앞서 예시 출력)
+# 사용자 입력(input)이나 이벤트 데이터(event)를 그대로 실행문(run) 등에 넣을 때는 보안 고려해야 합니다. 악의적으로 변조된 입력일 수 있으니까요.
