@@ -1,0 +1,48 @@
+name: string-function
+on: push
+
+jobs:
+  string-function:
+    runs-on: ubuntu-latest
+    steps:
+    - name: startsWith
+      if: startsWith('github actions', 'git')
+      run: echo "startsWith github"
+    - name: startsWith
+      if: startsWith('github actions', 'test')
+      run: echo "startsWith test"
+    - name: endsWith
+      if: endsWith('github actions', 'ions')
+      run: echo "endsWith github"
+    - name: endsWith
+      if: endsWith('github actions', 'test')
+      run: echo "endsWith test"
+    - name: contains
+      if: contains('github actions', 'act')
+      run: echo "contains github"
+    - name: contains
+      if: contains('github actions', 'git')
+      run: echo "contains test"
+
+
+# - startsWith, endsWith, contains
+#     - 문자열에 대한 조건 검사 수행
+#         - 잡 또는 스텝의 실행 여부 결정
+#     - startsWith
+#         - startsWith(searchString, searchValue)
+#         - startsWith(’github actions’, ‘git’)
+#             - return true
+#         - startsWith(’github actions’, ‘test’)
+#             - return false
+#     - endsWith
+#         - endsWith(searchString, searchValue)
+#         - endsWith(’github actions’, ‘ions’)
+#             - return true
+#         - endsWith(’github actions’, ‘test’)
+#             - return false
+#     - contains
+#         - contains(search, item)
+#         - contains(’github actions’, ‘act’)
+#             - return true
+#         - contains(’github actions’, ‘git’)
+#             - return true
