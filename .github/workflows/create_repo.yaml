@@ -23,6 +23,94 @@ jobs:
       run: |
         echo ${{ secrets.PERSONAL_ACCESS_TOKEN }} | gh auth login --with-token
     - name: create repo
+      id : create-repo
       run: |
         gh repo create jaeyeon-action-dev/${{ inputs.prefix }}-${{ inputs.nam }} --public --add-readme
+    
+    - name: slack
+      if: always()
+      uses: slackapi/slack-github-action@v1.24.0
+      with:
+        payload: |
+          {
+            "attachments": [
+              {
+                "pretext": "create repo result",
+                "color": "28a745",
+                "fields": [
+                  {
+                    "title": "create repo result ${{steps.create-repo.outcome}}",
+                    "short": true
+                    "value": "${{ inputs.prefix }}-${{ inputs.nam }}",
+                  }
+                ]
+              }
+            ]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
         
+
+
+
+# - 깃헙 레포 생성 자동화
+# - 키워드 기반 이슈 알림 자동화
+
+# - 깃헙 레포 생성 자동화
+#     - 깃헙 관리자
+#         - 깃헙 레포 생성에 대한 요청을 처리
+#     - 깃헙 레포 생성 시, 1가지 규칙
+#         - 정해진 prefix를 사용한 레포지토리 이름
+#         - ex) prefix: service
+#             - repo name: service-github-actions
+#     - 레포 생성 시, 1가지 규칙을 유지할 것.
+#         - 정해진 prefix 사용하는 레포 이름
+#     - 생성 여부에 대한 결과를 슬랙으로 보낼 것.
+    
+#     ### 워크플로우 구성
+    
+#     - 트리거 구성 ← 어떤 이벤트로 워크플로우를 트리거 시킬지!
+#     - 잡 구성 ← 워크플로우가 트리거 된 이후에 어떤 잡이 실행될 지 정의!
+#     - 정해진 Prefix 사용하는 레포지토리 이름
+#         - 레포지토리 이름을 어떻게 정할 지?
+#         - 어떤 Prefix 사용할 지
+#     - 슬랙 알림 전송(성공, 실패)
+    
+#     - 잡 구성
+#         1. jobs(job 2개 사용)
+#             1. 첫 번째 job : create-repo
+#             2. 두 번째 job : slack
+#         2. steps (단일 job)
+#             1. 첫 번째 step : create-repo
+#             2. 두 번째 step : slack
+        
+#         단일 잡 구성 Step1
+        
+#         - create-repo
+#             - input 값 기반의 레포 생성
+#                 - gh cli 사용
+#             - gh
+#                 - github cli
+#                 - 터미널에서 github 기능을 커맨드로 제어 가능
+#                     - 레포지토리, 이슈, 풀리퀘스트, 깃헙액션 등 관리
+#                 - 깃헙 러너에서 기본적으로 사용 가능
+        
+#         단일 잡 구성 Step2
+        
+#         - slack (액션 사용)
+#             - 레포 생성에 성공일 때 문제x
+#             - 레포 생성에 실패하면?
+#                 - if: always()
+        
+#         트리거 구성
+        
+#         - github event : workflow dispatch
+        
+#         단일 잡 구성
+        
+#         - create-repo
+#             - 인풋 값 받아서 gh cli로 레포 생성
+#         - slack
+#             - if:always()
