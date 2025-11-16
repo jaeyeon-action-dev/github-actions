@@ -11,5 +11,5 @@ jobs:
         run: |
           cat test.txt
       - name: uses tmate
-        uses: mxschmitt/action-tmate@v4
+        uses: mxschmitt/action-tmate@v3
         timeout-minutes: 10
