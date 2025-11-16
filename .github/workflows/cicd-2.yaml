@@ -41,7 +41,7 @@ jobs:
     steps:
       - name: set env
         id: set-env
-        runs: |
+        run: |
           echo ${{github.base_ref}}
           echo "environment=dev" >> $GITHUB_OUTPUT
 
