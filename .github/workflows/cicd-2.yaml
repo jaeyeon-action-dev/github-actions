@@ -1,0 +1,320 @@
+name : cicd-2
+on:
+  pull_request:
+    types: [opened, synchronize, closed]
+    branches: [dev, master]
+    paths:
+      - 'my-app/**'
+
+jobs:
+  test:
+    if: github.event.action == 'opened' || github.event.action == 'synchronize'
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout the code
+        uses: actions/checkout@v4
+      # - name: setup node
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: 18
+      # - name: Cache Node.js modules
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: ~/.npm
+      #     key:  ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-node-
+      # - name: Install dependencies
+      #   run: |
+      #       cd my-app
+      #       npm ci
+      # - name: npm build
+      #   run: |
+      #       cd my-app
+      #       npm run build
+
+  set-environment:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+    steps:
+      - name: set env
+        id: set-env
+        runs: |
+          echo ${{github.base_ref}}
+          echo "environment=dev" >> $GITHUB_OUTPUT
+
+          if [[ ${github.base_ref} == "master" ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          fi
+      - name: check env
+        run: echo ${{steps.set-env.outputs.environment}}
+
+  image-build:
+    runs-on: ubuntu-latest
+    needs: [set-environment]
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      matrix:
+        environment: [ "${{needs.set-environment.outputs.environment}}" ]
+    environment: ${{matrix.environment}}   
+    steps:
+      - name: checkout the code
+        uses: actions/checkout@v4
+      # - name: Configure AWS credentials
+      #   id: credentials
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-region: ${{ vars.AWS_REGION }}
+      #     role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+      # - name: Login to Amazon ECR
+      #   id: login-ecr
+      #   uses: aws-actions/amazon-ecr-login@v2
+      #   with:
+      #     mask-password: 'true'
+      # - name: docker build and push
+      #   run: |
+      #     docker build -f Dockerfile --tag ${{secrets.REGISRY}}/${{vars.REPOSITORY}}:${{github.sha}} .
+      #     docker push ${{secrets.REGISRY}}/${{vars.REPOSITORY}}:${{github.sha}}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [set-environment, image-build]
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      matrix:
+        environment: [ "${{needs.set-environment.outputs.environment}}" ]
+    environment: ${{matrix.environment}}
+    steps:
+      - name: checkout the code
+        uses: actions/checkout@v4
+      # - name: Configure AWS credentials
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-region: ${{ vars.AWS_REGION }}
+      #     role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+      # - name: setup kubectl
+      #   uses: azure/setup-kubectl@v3
+      #   with:
+      #     version: latest
+      # - name: setup helm
+      #   uses: azure/setup-helm@v3
+      #   with:
+      #     version: latest
+      # - name: access kubernetes
+      #   run: |
+      #     aws eks update-kubeconfig --name ${{ vars.CLUSTER_NAME }}
+      # - name: deploy
+      #   id: status
+      #   run: |
+      #     helm upgrade --install my-app kubernetes/my-app --create-namespace --namespace my-app-${{vars.SUFFIX}} \
+      #     -- set image.tag=${{github.sha}} \
+      #     -- set image.repository=${{secrets.REGISRY}}/${{vars.REPOSITORY}}
+      # - name: notify
+      #   if: always()
+      #   uses: slackapi/slack-github-action@v1.24.0
+      #   with:
+      #     payloads: |
+      #       {
+      #         "text": "message",
+      #         "blocks": [
+      #             "type": "section",
+      #             "text": {
+      #                 "type": "mrkdwn",
+      #                 "text": "Environment: dev, Deploy Result : ${needs.set-environment.outputs.environment}}, Repository : ${{github.repository}}"
+      #             }
+      #           ]
+      #       }
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+  create-pr:
+    if: needs.set-environment.outputs.environment == 'dev'
+    runs-on: ubuntu-latest
+    needs: [set-environment, deploy]
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+    - name: gh auth login
+      run: |
+        echo ${{secrets.PERSONAL_ACCESS_TOKEN}} | gh auth login --with-token
+    - name: create branch
+      run: |
+        git checkout -b release/${{github.run_id}}
+        git push origin release/${{github.run_id}}
+    - name: create pr
+      run: |
+        gh pr create base master --head release/${{github.run_id}} --title "release/${{github.run_id}} -> master" --body "release PR"
+      
+
+
+# - 가정
+#     - 개발 환경과 운영 환경의 CICD 구성
+#     - branch
+#         - dev : 개발 환경
+#         - master: 운영 환경
+# - 요구사항
+#     1. 특정 path에 대해서만 실행(my-app)
+#     2. dev, master branch로 PR이 생성&동기화 될 때 테스트 작업 실행(CI)
+#     3. PR이 dev branch로 머지되면, 이미지 빌드하고 개발 환경에 배포(CD)
+#     4. PR이 master branch로 머지되면, 이미지 빌드하고 운영 환경에 배포(CD)
+#     5. 배포 성공 여부 슬랙으로 전송
+
+# ✅ 1. 이 그림이 의미하는 브랜치 전략 (요약)
+# 이 그림은 아래 3가지를 결합한 프로페셔널한 DevOps 구조:
+# 🔹 (1) Git Flow에 가까운 3단계 브랜치 전략
+# Dev branch: 개발자들의 통합 개발 환경
+# Release/run-id branch: QA / 검증을 위한 릴리즈 후보(RC) 브랜치
+# Master branch: 실제 서비스(Prod) 운영 브랜치
+
+# 🔹 (2) GitHub Actions 기반 CI/CD 파이프라인
+# Feature 브랜치 커밋 시 → CI 실행
+# PR 생성 시 → CI 실행 후 병합
+# Dev merge 시 → Dev 환경 Deploy
+# Release merge 시 → Prod Deploy
+
+# 🔹 (3) 안정적인 운영을 위한 단계적 배포 전략
+# Dev → QA/Release → Prod
+# 단계별 자동/수동 배포를 할 수 있는 구조
+# ✅ 2. 그림 전체 흐름을 텍스트로 재구성 (전체 요약)
+# 아래는 그림을 그대로 텍스트로 읽을 수 있게 재구성한 서술형 흐름입니다.
+# 🔸 Step 1. Feature branch 생성
+# 개발자는 Dev 브랜치에서 새로운 기능 개발을 위해
+# → Feature branch(예: feature/login) 를 생성함.
+# 개발 진행 중 여러 번 Commit 발생.
+# Commit 때마다 GitHub Actions가 CI(빌드, 테스트) 자동으로 실행됨.
+# 🔸 Step 2. Feature branch → Dev branch Pull Request
+# 기능이 완성되면 Feature branch에서 Dev branch로 PR(Pull Request) 생성.
+# PR 생성 시 CI가 다시 실행되어 문제 여부 확인.
+# 코드 리뷰 후 승인되면 Dev로 Merge.
+
+# 🔸 Step 3. Dev branch Merge → 자동 Dev 배포
+# Dev 브랜치로 Merge가 완료되면
+# → Dev 환경으로 자동 Deploy(dev) 실행.
+# QA, 개발자, PM이 Dev 환경에서 기능 테스트 수행.
+# 🔸 Step 4. Dev branch에서 Release/run-id branch 생성
+# Dev 환경에서 QA 테스트가 완료되면
+# → 정식 릴리즈를 위한 Release 브랜치를 생성
+# (예: release/2025-11-15_01, release/v1.2.0 등)
+# Release 브랜치 생성 직후에도 CI가 실행되어 빌드 및 릴리즈 준비 상태 점검.
+
+# 🔸 Step 5. Release branch → Master branch Pull Request
+# Release 브랜치가 준비되면 Master로 PR 생성.
+# PR 생성 시 CI 재검증:
+# 빌드 테스트
+# E2E 테스트
+# 린팅
+# 보안 검사 등
+# 승인되면 Master로 Merge.
+# 🔸 Step 6. Master branch Merge → 자동 Production 배포
+# Master에 merge되는 순간
+# → GitHub Actions의 CD 파이프라인이 실행.
+# 서비스는 Production 환경으로 Deploy(prod) 된다.
+# Master는 항상 실제 운영 버전을 반영하는 브랜치가 됨.
+
+# ✅ 3. 그림의 구성 요소별 상세 설명
+# 🔹 Feature branch
+
+# 기능 개발을 위한 임시 브랜치
+# → Commit마다 CI 실행
+# 🔹 Pull Request(PR)
+# Feature → Dev
+# Release → Master
+# 각 단계에서 코드 리뷰 & 테스트 필수
+# 🔹 CI(Continuous Integration)
+# 하늘색 원형 아이콘
+# 코드 빌드
+# 테스트
+# 품질 검사
+# 병합 안전성 검증
+# PR 품질 보증의 핵심 역할
+
+# 🔹 Dev branch
+# 모든 기능이 처음 모이는 개발 통합 브랜치
+# → Dev Merge 시 자동 배포
+
+# 🔹 Deploy dev
+# Dev 서버(개발 환경) 자동 배포
+# QA 테스트 및 개발자 실시간 검증 가능
+
+# 🔹 Release/run-id branch
+# 릴리즈 준비, QA 최종 검증을 위한 브랜치
+# 버전(tag) 부여 전 단계
+
+# 🔹 Deploy prod
+# 최종 Master merge 시
+# → Production 자동 배포
+
+# ✅ 4. 이 전략의 목적(왜 이런 구조를 쓰는가?)
+# ✔ 1) 대규모 팀 협업 최적화
+
+# Dev, Release, Master 분리로 혼선을 방지
+# ✔ 2) 안정성과 속도를 동시에 확보
+# Dev: 빠른 배포 및 개발
+# Release: 검증
+# Master: 안정화 및 운영
+# ✔ 3) 단계적 배포로 실수/장애 예방
+# 운영 반영 전 반드시 QA/Stage(Release)를 거침
+# ✔ 4) CI/CD 자동화로 작업 효율 상승
+# 사람이 하는 실수 제거 + 안정성 증가
+# ✅ 최종 요약 (한눈 요약)
+# 이 그림은 프로페셔널한 3단계 Git 브랜치 전략 + 자동 CI/CD 파이프라인을 뜻한다.
+# Feature → Dev → Release → Master
+#   CI       Dev Deploy     Prod Deploy
+# Feature: 기능 개발
+# Dev: 통합 개발환경 + 자동 Dev 배포
+# Release: QA/테스트용 릴리즈 후보
+# Master: 실제 운영 버전 + 자동 프로덕션 배포
+# DevOps의 핵심 원칙인 **‘점진적 통합 + 단계적 배포 + 자동화’**가 모두 포함된 구조이다.
+
+# - dev - master branch 간 직접적인 PR 연결
+#     - 의도하지 않은 동기화 문제 발생 o
+# - release/run-id branch 를 사용한 간접적인 PR 연결
+#     - 의도하지 않은 동기화 문제 발생 x
+
+# - 트리거 구성
+#     - github event : pull request
+#     - path filter : my-app
+#     - branch filter : dev, master
+# - 잡 구성
+#     - 개발 환경(dev)에 배포할 때 사용하는 Job
+#     - 운영 환경(Production)에 배포할 때 사용하는 Job
+#     - 배포 환경마다 다른 job을 사용해야할까?
+#         - dev
+#             - image-build-dev
+#             - deploy-dev
+#         - prod
+#             - image-build-prod
+#             - deploy-prod
+#     - 배포 환경 마다 다른 환경 변수나 시크릿을 사용하도록 구성
+#     - 여러 개의 잡 x, 단일 잡 o
+#     - environment 사용
+#         - 각 환경마다 환경변수, 시크릿 설정 및 사용
+# - set-environment
+#     - 현재 배포 환경 판단
+#     - dev branch로 머지되면 개발 환경(dev)
+#     - master branch로 머지되면 운영 환경(prod)
+#     - 아웃풋 구성(set-env)
+# - create-pr
+#     1. checkout action 사용
+#     2. github 권한 받아오기
+#     3. release/run-id 브랜치 생성
+#         1. release 브랜치에서 master branch로 PR 생성 (gh cli)
+# - 개발 환경 배포에 성공한다면?
+#     1. 그 시점의 릴리즈 브랜치 생성
+#     2. 릴리즈 브랜치 - master 브랜치 사이에 PR 생성
+#     3. 이 PR이 머지하면 운영 환경으로 배포
+
+# - Add branch filter : master
+# - Update job
+#     - image-build
+#     - deploy
+# - Create job
+#     - set-environment
+#     - create-pr
