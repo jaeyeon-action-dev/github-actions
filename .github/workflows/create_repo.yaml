@@ -10,7 +10,7 @@ on:
         options:
         - example
         - service
-      nam:
+      name:
         description: 'set repo name'
         required: true
         default: 'github-actions'
