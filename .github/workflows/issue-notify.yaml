@@ -33,7 +33,6 @@ jobs:
     steps:
       - name: slack
         uses: slackapi/slack-github-action@v1.24.0
-
         payload: |
           {
             "attachments": [
